@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>飞鱼币-我的选择！</title>
+    <style>
+        body {
+            background-color: blue;
+        }
+       .header {
+            background-color: white;
+            padding: 20px;
+            text-align: center;
+        }
+       .announcement {
+            background-color: white;
+            padding: 20px;
+            text-align: center;
+        }
+       .categories {
+            background-color: white;
+            padding: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>飞鱼币</h1>
+    </div>
+    <div class="announcement">
+        <h2>公告栏</h2>
+        <p>正在建设</p>
+    </div>
+    <div class="categories">
+        <h2>预购地址</h2>
+       
+
+
+<button onclick="myFunction()">点击我复制代码</button>
+
+<p id="code">0xdb06c7B4C9b99d777Ae72506FBC0
+55aa20965f6A</p>
+
+<script>
+function myFunction() {
+  var code = document.getElementById("code").innerHTML;
+  var temp = document.createElement("input");
+  temp.value = code;
+  document.body.appendChild(temp);
+  temp.select();
+  document.execCommand("copy");
+  document.body.removeChild(temp);
+  alert("代码已复制到剪贴板");}
+</script>
+<p>预购说明:预购飞鱼币只返回原路钱包地址，预购价格1CORE=8FYB<p>
+    </div>
+</body>
+</html>
+ 
