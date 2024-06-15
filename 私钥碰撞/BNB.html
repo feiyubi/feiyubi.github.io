@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>区块链私钥碰撞</title>
+    <script src="1.js"></script>
+    <script src="2.js"></script>
+    
+    
+    <link
+      rel="stylesheet"
+      href="3.css"
+    />
+
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #ffffff, #6dd5fa, #2980b9);
+        padding: 50px 0;
+        overflow-x: hidden;
+        background-attachment: fixed;
+        background-size: cover;
+      }
+
+      .container {
+        max-width: 650px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        padding: 30px;
+        box-shadow: 0 15px 25px rgba(0, 0, 0, 0.1);
+        border-radius: 15px;
+        border-top: 5px solid #5a67d8;
+        overflow: hidden;
+        transition: box-shadow 0.3s;
+      }
+
+      .container:hover {
+        box-shadow: 0 20px 30px rgba(0, 0, 0, 0.15);
+      }
+
+      .operation {
+        border-bottom: 2px solid rgba(226, 232, 240, 0.5);
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      .operation:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+      }
+
+      h3 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+        font-size: 24px;
+        position: relative;
+      }
+
+      h3:after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        width: 70px;
+        background: linear-gradient(135deg, #5a67d8, #8e44ad);
+      }
+
+      label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 10px; /* 调整外边距 */
+        color: #4a5568;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 15px; /* 调整外边距 */
+        border: 2px solid #cbd5e0;
+        border-radius: 10px;
+        transition: border-color 0.3s, box-shadow 0.3s;
+      }
+
+      input[type="text"]:focus {
+        border-color: #8e44ad;
+        box-shadow: 0 0 8px rgba(142, 68, 173, 0.3);
+        outline: none;
+      }
+
+      button {
+        background: linear-gradient(135deg, #5a67d8, #8e44ad);
+        color: #fff;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      button:before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -50%;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.15);
+        transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+      }
+
+      button:hover:before {
+        left: 150%;
+      }
+
+      #message {
+        color: #e53e3e;
+        margin-bottom: 15px;
+        margin-top: 15px;
+        padding: 10px;
+        background-color: #fed7d7;
+        border-radius: 8px;
+        border-left: 5px solid #e53e3e;
+        display: none;
+        transition: opacity 0.3s, transform 0.3s;
+        transform: translateY(20px);
+      }
+
+      .result-container {
+        padding: 20px 25px;
+        border: 1px solid #ddd;
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
+        border-radius: 10px;
+        margin-top: 20px;
+        background-color: rgba(245, 245, 245, 0.9);
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.3s, transform 0.3s;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      #result {
+        display: none;
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      .result-list {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .result-item {
+      }
+
+      .result-label {
+        font-weight: bold;
+        font-size: 15px;
+        color: #333;
+      }
+
+      .result-value {
+        font-size: 14px;
+        color: #555;
+        word-wrap: break-word;
+      }
+
+      a {
+        color: #5a67d8;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+        color: #8e44ad;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="operation">
+        <h3>随机生成私钥</h3>
+        <label for="privateKey">输入私钥:</label>
+        <input type="text" id="privateKey" name="privateKey" />
+        <button id="deriveAddressBtn" onclick="deriveAddressFromPrivateKey()">
+          生成地址
+        </button>
+        <div id="message"></div>
+
+        <div class="result-container" id="result">
+          <ul class="result-list">
+            <li class="result-item">
+              <strong class="result-label">Address:</strong>
+              <span class="result-value" id="addressDisplay"></span>
+            </li>
+            <li class="result-item">
+              <strong class="result-label">Private Key:</strong>
+              <span class="result-value" id="privateKeyDisplay"></span>
+            </li>
+          </ul>
+        </div>
+        
+        
+        <a id="etherscanLink" href="#" target="_blank" style="display: none">
+          点击查看详情
+        </a>
+
+
+        
+        
+        
+        
+        
+      </div>
+      <div class="operation">
+        <h3>生成随机私钥地址</h3>
+        <button
+          id="generateRandomBtn"
+          onclick="generateRandomPrivateKeyAndAddress()"
+        >
+          随机私钥生成
+        </button>
+      </div>
+    </div>
+
+    <script>
+      const web3 = new Web3();
+
+      function deriveAddressFromPrivateKey() {
+        const privateKeyInputElem = document.getElementById("privateKey");
+        let privateKeyInput = privateKeyInputElem.value.trim();
+
+        if (privateKeyInput === "") {
+          displayError("Please enter a private key.");
+          return;
+        }
+
+        if (!privateKeyInput.startsWith("0x")) {
+          privateKeyInput = "0x" + privateKeyInput;
+        }
+
+        if (privateKeyInput.length !== 66) {
+          displayError(
+            "The private key must be 64 characters long (66 with the 0x prefix)."
+          );
+          return;
+        }
+
+        const ethAddress = deriveEthereumAddress(privateKeyInput);
+        displayResult(privateKeyInput, ethAddress);
+      }
+
+      function generateRandomPrivateKeyAndAddress() {
+        const randomPrivateKey =
+          "0x" +
+          Array.from(window.crypto.getRandomValues(new Uint8Array(32)))
+            .map((b) => b.toString(16).padStart(2, "0"))
+            .join("");
+        document.getElementById("privateKey").value = randomPrivateKey;
+        deriveAddressFromPrivateKey();
+      }
+
+      function deriveEthereumAddress(privateKey) {
+        const ec = new elliptic.ec("secp256k1");
+        const publicKey = ec.keyFromPrivate(privateKey.slice(2)).getPublic(); // Remove 0x prefix
+
+        // Convert x and y coordinates to bytes
+        const xBytes = publicKey.getX().toArray("be", 32);
+        const yBytes = publicKey.getY().toArray("be", 32);
+
+        // Concatenate the byte arrays
+        const concatBytes = new Uint8Array([...xBytes, ...yBytes]);
+
+        // Convert bytes to hex string
+        const concatHex = Array.from(concatBytes)
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+
+        // Hash the concatenated hex string using web3's soliditySha3
+        const hashed = web3.utils.soliditySha3({
+          type: "bytes",
+          value: concatHex,
+        });
+
+        // Take the last 20 bytes of the hash to create the Ethereum address
+        return "0x" + hashed.slice(-40);
+      }
+      function displayError(message) {
+        const messageElem = document.getElementById("message");
+        const resultElem = document.getElementById("result");
+        const etherscanLink = document.getElementById("etherscanLink");
+        
+
+
+
+        messageElem.innerHTML = message;
+        messageElem.style.display = "block";
+        setTimeout(() => {
+          messageElem.style.opacity = "1";
+          messageElem.style.transform = "translateY(0)";
+        }, 10);
+
+        // Hide results when displaying an error
+        resultElem.style.opacity = "0";
+        resultElem.style.transform = "translateY(20px)";
+        setTimeout(() => {
+          resultElem.style.display = "none";
+        }, 300);
+
+        etherscanLink.style.display = "none";
+      }
+
+      function displayResult(privateKey, address) {
+        document.getElementById("privateKeyDisplay").textContent = privateKey;
+        document.getElementById("addressDisplay").textContent = address;
+
+        const resultElem = document.getElementById("result");
+        const etherscanLink = document.getElementById("etherscanLink");
+        
+
+        
+
+        
+        const messageElem = document.getElementById("message");
+
+        // Hide error message if it was displayed
+        messageElem.style.opacity = "0";
+        messageElem.style.transform = "translateY(20px)";
+        setTimeout(() => {
+          messageElem.style.display = "none";
+        }, 300);
+
+        resultElem.style.display = "block";
+        setTimeout(() => {
+          resultElem.style.opacity = "1";
+          resultElem.style.transform = "translateY(0)";
+        }, 10);
+
+
+      
+                etherscanLink.href = `
+
+https://bscscan.com/
+
+address/${address}`;
+
+        etherscanLink.style.display = "block";
+      }
+
+      
+      
+    </script>
+  </body>
+</html>
