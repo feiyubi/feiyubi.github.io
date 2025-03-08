@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>区块链私钥碰撞</title>
+    <script src="1.js"></script>
+    <script src="2.js"></script>
+    
+    
+    <link
+      rel="stylesheet"
+      href="3.css"
+    />
+
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #ffffff, #6dd5fa, #2980b9);
+        padding: 50px 0;
+        overflow-x: hidden;
+        background-attachment: fixed;
+        background-size: cover;
+      }
+
+      .container {
+        max-width: 650px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        padding: 30px;
+        box-shadow: 0 15px 25px rgba(0, 0, 0, 0.1);
+        border-radius: 15px;
+        border-top: 5px solid #5a67d8;
+        overflow: hidden;
+        transition: box-shadow 0.3s;
+      }
+
+      .container:hover {
+        box-shadow: 0 20px 30px rgba(0, 0, 0, 0.15);
+      }
+
+      .operation {
+        border-bottom: 2px solid rgba(226, 232, 240, 0.5);
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      .operation:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+      }
+
+      h3 {
+        color: #2c3e50;
+        margin-bottom: 20px;
+        font-size: 24px;
+        position: relative;
+      }
+
+      h3:after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        height: 3px;
+        width: 70px;
+        background: linear-gradient(135deg, #5a67d8, #8e44ad);
+      }
+
+      label {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 10px; /* 调整外边距 */
+        color: #4a5568;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 15px; /* 调整外边距 */
+        border: 2px solid #cbd5e0;
+        border-radius: 10px;
+        transition: border-color 0.3s, box-shadow 0.3s;
+      }
+
+      input[type="text"]:focus {
+        border-color: #8e44ad;
+        box-shadow: 0 0 8px rgba(142, 68, 173, 0.3);
+        outline: none;
+      }
+
+      button {
+        background: linear-gradient(135deg, #5a67d8, #8e44ad);
+        color: #fff;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+        position: relative;
+        overflow: hidden;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      button:before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -50%;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(255, 255, 255, 0.15);
+        transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+      }
+
+      button:hover:before {
+        left: 150%;
+      }
+
+      #message {
+        color: #e53e3e;
+        margin-bottom: 15px;
+        margin-top: 15px;
+        padding: 10px;
+        background-color: #fed7d7;
+        border-radius: 8px;
+        border-left: 5px solid #e53e3e;
+        display: none;
+        transition: opacity 0.3s, transform 0.3s;
+        transform: translateY(20px);
+      }
+
+      .result-container {
+        padding: 20px 25px;
+        border: 1px solid #ddd;
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.05);
+        border-radius: 10px;
+        margin-top: 20px;
+        background-color: rgba(245, 245, 245, 0.9);
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.3s, transform 0.3s;
+        margin-bottom: 20px;
+        display: none;
+      }
+
+      #result {
+        display: none;
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      .result-list {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .result-item {
+      }
+
+      .result-label {
+        font-weight: bold;
+        font-size: 15px;
+        color: #333;
+      }
+
+      .result-value {
+        font-size: 14px;
+        color: #555;
+        word-wrap: break-word;
+      }
+
+      a {
+        color: #5a67d8;
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+        color: #8e44ad;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+     
+        <h2>BTC随机私钥生成，在线查询！</h2>
+
+        <div class="warning">
+        
+        </div>
+        
+        <button onclick="generate()">生成地址</button>
+
+            <button onclick="queryBalance()">查询余额</button>
+<p>
+        <div>
+            <strong>私钥 (HEX):</strong>
+            <div class="output" id="privateKey"></div>
+        </div>
+        <p>
+        <div>
+            <strong>比特币地址:</strong>
+            <div class="output" id="address"></div>
+        </div>
+
+
+        
+    </div>
+
+<script src="elliptic.min.js"></script>
+<script src="crypto-js.min.js"></script>
+<script src="ripemd160.min.js"></script>
+
+<script>
+	
+	 function queryBalance() {
+            const address = document.getElementById('address').textContent
+            if (!address) {
+                alert('请先生成钱包地址')
+                return
+            }
+
+
+            const explorerUrl = `https://www.oklink.com/zh-hans/btc/address/${address}`
+            window.open(explorerUrl, '_blank')
+        }
+
+      
+        function generate() {
+            try {
+                
+                document.getElementById("address").textContent = ''
+                
+               
+            } catch (error) {
+                alert("生成错误: " + error.message)
+            }
+        }
+
+	
+	
+const ec = new elliptic.ec('secp256k1')
+
+function base58Encode(bytes) {
+    const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+    let bigInt = BigInt('0x' + Array.from(bytes)
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join(''))
+
+    let result = ""
+    while (bigInt > 0n) {
+        const mod = bigInt % 58n
+        result = alphabet[Number(mod)] + result
+        bigInt = bigInt / 58n
+    }
+
+    
+    for (let i = 0; i < bytes.length; i++) {
+        if (bytes[i] !== 0) break
+        result = '1' + result
+    }
+
+    return result
+}
+
+
+function hexToBytes(hex) {
+    const bytes = new Uint8Array(hex.length / 2)
+    for (let i = 0; i < hex.length; i += 2) {
+        bytes[i/2] = parseInt(hex.substr(i, 2), 16)
+    }
+    return bytes
+}
+
+function bytesToHex(bytes) {
+    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
+}
+
+function hash160(pubKeyBytes) {
+   
+    const sha256Hash = CryptoJS.SHA256(CryptoJS.lib.WordArray.create(pubKeyBytes))
+ 
+    const ripeHash = CryptoJS.RIPEMD160(sha256Hash)
+    return hexToBytes(ripeHash.toString())
+}
+
+function sha256x2(buffer) {
+    const first = CryptoJS.SHA256(CryptoJS.lib.WordArray.create(buffer))
+    const second = CryptoJS.SHA256(first)
+    return hexToBytes(second.toString()).slice(0, 4)
+}
+
+function generate() {
+    try {
+        const privateKeyBytes = new Uint8Array(32)
+        window.crypto.getRandomValues(privateKeyBytes)
+        const privateKeyHex = bytesToHex(privateKeyBytes)
+        document.getElementById("privateKey").textContent = privateKeyHex
+        
+        const address = getAddress(privateKeyHex)
+        document.getElementById("address").textContent = address
+
+    } catch (error) {
+        alert("生成错误: " + error.message)
+    }
+}
+
+function getAddress(privateKeyHex) {
+    if (!/^[0-9a-f]{64}$/.test(privateKeyHex)) {
+        throw new Error("无效的私钥格式")
+    }
+
+    const keyPair = ec.keyFromPrivate(privateKeyHex, 'hex')
+    const pubKeyCompressed = keyPair.getPublic().encode('hex', true)
+    const pubKeyBytes = hexToBytes(pubKeyCompressed)
+
+    const hash160Bytes = hash160(pubKeyBytes)
+    
+    const version = new Uint8Array([0x00])
+    const payload = new Uint8Array([...version, ...hash160Bytes])
+
+    const checksum = sha256x2(payload)
+
+    const addressBytes = new Uint8Array([...payload, ...checksum])
+    return base58Encode(addressBytes)
+}
+
+
+</script>
+</body>
+</html>
