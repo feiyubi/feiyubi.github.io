@@ -7,7 +7,9 @@
     <title>区块链私钥碰撞</title>
     <script src="1.js"></script>
     <script src="2.js"></script>
-    
+        <script src="elliptic.min.js"></script>
+    <script src="crypto-js.min.js"></script>
+    <script src="ripemd160.min.js"></script>
     
     <link
       rel="stylesheet"
@@ -191,66 +193,43 @@
 
   <body>
     <div class="container">
-     
-        <h2>BTC随机私钥生成，在线查询！</h2>
+      <h2>BTC随机私钥生成，在线查询！</h2>
 
-        <div class="warning">
-        
-        </div>
-        
-        <button onclick="generate()">生成地址</button>
-
-            <button onclick="queryBalance()">查询余额</button>
+      <!-- 手动输入区域 -->
+      <div class="input-group">
+        <label for="privateKeyInput">手动输入私钥（HEX格式）:</label>
+        <input 
+          type="text" 
+          id="privateKeyInput" 
+          placeholder="请输入64位十六进制私钥"
+          maxlength="64"
+          autocomplete="off"
+        />
+        <div id="inputError" class="error-message"></div>
+        <button onclick="handleManualKey()" style="margin-top: 10px;">导入私钥</button>
+      </div>
 <p>
+      <button onclick="generateRandom()">随机生成</button>
+      <button onclick="queryBalance()">查询余额</button>
+
+      <div class="result-box">
         <div>
-            <strong>私钥 (HEX):</strong>
-            <div class="result-value" id="privateKey"></div>
+          <strong>私钥 (HEX):</strong>
+          <div class="result-value" id="privateKey"></div>
         </div>
         <p>
-
         <div>
-            <strong>比特币地址:</strong>
-            <div class="result-value" id="address"></div>
+          <strong>比特币地址:</strong>
+          <div class="result-value" id="address"></div>
         </div>
-
-
-        
+      </div>
     </div>
 
-<script src="elliptic.min.js"></script>
-<script src="crypto-js.min.js"></script>
-<script src="ripemd160.min.js"></script>
-
 <script>
-	
-	 function queryBalance() {
-            const address = document.getElementById('address').textContent
-            if (!address) {
-                alert('请先生成钱包地址')
-                return
-            }
-
-
-            const explorerUrl = `https://www.oklink.com/zh-hans/btc/address/${address}`
-            window.open(explorerUrl, '_blank')
-        }
-
-      
-        function generate() {
-            try {
-                
-                document.getElementById("address").textContent = ''
-                
-               
-            } catch (error) {
-                alert("生成错误: " + error.message)
-            }
-        }
-
-	
-	
+// 初始化椭圆曲线
 const ec = new elliptic.ec('secp256k1')
 
+// 基础函数保持不变
 function base58Encode(bytes) {
     const alphabet = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
     let bigInt = BigInt('0x' + Array.from(bytes)
@@ -264,7 +243,6 @@ function base58Encode(bytes) {
         bigInt = bigInt / 58n
     }
 
-    
     for (let i = 0; i < bytes.length; i++) {
         if (bytes[i] !== 0) break
         result = '1' + result
@@ -272,7 +250,6 @@ function base58Encode(bytes) {
 
     return result
 }
-
 
 function hexToBytes(hex) {
     const bytes = new Uint8Array(hex.length / 2)
@@ -287,9 +264,7 @@ function bytesToHex(bytes) {
 }
 
 function hash160(pubKeyBytes) {
-   
     const sha256Hash = CryptoJS.SHA256(CryptoJS.lib.WordArray.create(pubKeyBytes))
- 
     const ripeHash = CryptoJS.RIPEMD160(sha256Hash)
     return hexToBytes(ripeHash.toString())
 }
@@ -300,21 +275,7 @@ function sha256x2(buffer) {
     return hexToBytes(second.toString()).slice(0, 4)
 }
 
-function generate() {
-    try {
-        const privateKeyBytes = new Uint8Array(32)
-        window.crypto.getRandomValues(privateKeyBytes)
-        const privateKeyHex = bytesToHex(privateKeyBytes)
-        document.getElementById("privateKey").textContent = privateKeyHex
-        
-        const address = getAddress(privateKeyHex)
-        document.getElementById("address").textContent = address
-
-    } catch (error) {
-        alert("生成错误: " + error.message)
-    }
-}
-
+// 地址生成函数（修复作用域问题）
 function getAddress(privateKeyHex) {
     if (!/^[0-9a-f]{64}$/.test(privateKeyHex)) {
         throw new Error("无效的私钥格式")
@@ -335,7 +296,58 @@ function getAddress(privateKeyHex) {
     return base58Encode(addressBytes)
 }
 
+// 处理手动输入
+function handleManualKey() {
+    const errorElement = document.getElementById('inputError')
+    errorElement.style.display = 'none'
+    
+    const input = document.getElementById('privateKeyInput').value
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-f0-9]/g, '')
 
+    if (input.length !== 64) {
+        errorElement.textContent = '无效的私钥：必须为64位十六进制字符'
+        errorElement.style.display = 'block'
+        return
+    }
+
+    try {
+        document.getElementById('privateKey').textContent = input
+        const address = getAddress(input)
+        document.getElementById('address').textContent = address
+    } catch (error) {
+        errorElement.textContent = '地址生成错误：' + error.message
+        errorElement.style.display = 'block'
+    }
+}
+
+// 随机生成功能（修复后的版本）
+function generateRandom() {
+    try {
+        const privateKeyBytes = new Uint8Array(32)
+        window.crypto.getRandomValues(privateKeyBytes)
+        const privateKeyHex = bytesToHex(privateKeyBytes)
+        
+        document.getElementById("privateKey").textContent = privateKeyHex
+        document.getElementById("address").textContent = getAddress(privateKeyHex)
+        document.getElementById('inputError').style.display = 'none'
+    } catch (error) {
+        document.getElementById('inputError').textContent = "生成错误: " + error.message
+        document.getElementById('inputError').style.display = 'block'
+    }
+}
+
+// 余额查询功能
+function queryBalance() {
+    const address = document.getElementById('address').textContent
+    if (!address) {
+        alert('请先生成钱包地址')
+        return
+    }
+    window.open(`https://www.oklink.com/zh-hans/btc/address/${address}`, '_blank')
+}
 </script>
-</body>
+
+  </body>
 </html>
